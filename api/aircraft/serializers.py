@@ -10,4 +10,4 @@ class AircraftSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Aircraft
-        fields = ('serial_number', 'manufacturer')
+        fields = ('id', 'serial_number', 'manufacturer')

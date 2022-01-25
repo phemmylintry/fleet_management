@@ -12,7 +12,7 @@ class Aircraft(models.Model):
     manufacturer = models.CharField(max_length=512, default=None, null=True, blank=True)
 
     def __str__(self):
-        return self.serial_number
+        return str(self.serial_number)
 
 
 class Airport(models.Model):
@@ -20,12 +20,13 @@ class Airport(models.Model):
     Airport model
     """
 
-    icao_code = models.CharField(
+    name = models.CharField(max_length=512, default=None, null=True, blank=True)
+    icao = models.CharField(
         max_length=4, unique=True, default=None, null=True, blank=True
     )
 
     def __str__(self):
-        return self.icao_code
+        return str(self.icao)
 
 
 class Flight(models.Model):
@@ -34,7 +35,12 @@ class Flight(models.Model):
     """
 
     aircraft = models.ForeignKey(
-        Aircraft, on_delete=models.CASCADE, default=None, null=True, blank=True, related_name="flights"
+        Aircraft,
+        on_delete=models.CASCADE,
+        default=None,
+        null=True,
+        blank=True,
+        related_name="aircraft_flights",
     )
     departure_airport = models.ForeignKey(
         Airport,
@@ -42,7 +48,7 @@ class Flight(models.Model):
         default=None,
         null=True,
         blank=True,
-        related_name="departure_airport",
+        related_name="departure_flights",
     )
     arrival_airport = models.ForeignKey(
         Airport,
@@ -50,10 +56,12 @@ class Flight(models.Model):
         default=None,
         null=True,
         blank=True,
-        related_name="arrival_airport",
+        related_name="arrival_flights",
     )
     departure_time = models.DateTimeField(default=None, null=True, blank=True)
     arrival_time = models.DateTimeField(default=None, null=True, blank=True)
 
     def __str__(self):
-        return self.aircraft.icao_code
+        return str(self.aircraft)
+
+    

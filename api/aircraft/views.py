@@ -12,9 +12,11 @@ class AircraftViewSet(APIView):
     """
 
     def get(self, request, format=None):
+        response = {'status': 1, 'message': "Successfully retrieved aircraft list.", 'data':""}
         aircraft = Aircraft.objects.all()
         serializer = AircraftSerializer(aircraft, many=True)
-        return Response(serializer.data)
+        response['data'] = serializer.data
+        return Response(response)
 
     def post(self, request, format=None):
         serializer = AircraftSerializer(data=request.data)
