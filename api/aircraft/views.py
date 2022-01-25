@@ -1,4 +1,4 @@
-from django.http import Http404
+from django.http import Http404, response
 from fleet.models import Aircraft, Airport, Flight
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,13 +12,22 @@ class AircraftViewSet(APIView):
     """
 
     def get(self, request, format=None):
-        response = {'status': 1, 'message': "Successfully retrieved aircraft list.", 'data':""}
+        response = {
+            "status": 1,
+            "message": "Successfully retrieved aircraft list.",
+            "data": "",
+        }
         aircraft = Aircraft.objects.all()
         serializer = AircraftSerializer(aircraft, many=True)
-        response['data'] = serializer.data
+        response["data"] = serializer.data
         return Response(response)
 
     def post(self, request, format=None):
+        response = {
+            "status": 1,
+            "message": "Successfully created new aircraft.",
+            "data": "",
+        }
         serializer = AircraftSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -27,7 +36,8 @@ class AircraftViewSet(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
-        return Response(serializer.data, status=201)
+        response["data"] = serializer.data
+        return Response(response, status=201)
 
 
 class AircraftDetailViewSet(APIView):

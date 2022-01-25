@@ -1,11 +1,27 @@
 from api.aircraft.serializers import AircraftSerializer
 from api.airport.serializers import AirportSerializer
 from django.utils import timezone
-from fleet.models import Flight
+from fleet.models import Airport, Flight
 from rest_framework import serializers
 
 
-class FlightSerializer(serializers.ModelSerializer):
+
+class BaseFlightSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Flight
+        fields = "__all__"
+    
+    def validate(self, attrs):
+        departure_airport = attrs.get("departure_airport")
+        arrival_airport = attrs.get("arrival_airport")
+
+        # Check if departure and arrival airports are the same
+        if departure_airport == arrival_airport:
+            raise serializers.ValidationError("Departure and arrival airports must be different")
+        
+        return attrs
+
+class FlightSerializer(BaseFlightSerializer):
     """
     Flight model serializer
     """
@@ -36,8 +52,7 @@ class FlightSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Arrival time cannot be before departure time"
             )
-
-        return attrs
+        return attrs    
 
     def get_departure_airport(self, obj):
         return AirportSerializer(obj.departure_airport).data

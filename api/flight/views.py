@@ -8,11 +8,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .filters import FlightFilter
-from .serializers import FlightSerializer
+from .serializers import FlightSerializer, BaseFlightSerializer
 
 
 class FlightView(APIView):
-    serializer_class = FlightSerializer
+    serializer_class = BaseFlightSerializer
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -29,7 +29,7 @@ class FlightListView(ListAPIView):
 
 
 class FlightDetailView(APIView):
-    serializer_class = FlightSerializer
+    serializer_class = BaseFlightSerializer
 
     def get_object(self, pk):
         try:
@@ -46,6 +46,7 @@ class FlightDetailView(APIView):
         flight = self.get_object(pk)
         serializer = self.serializer_class(flight, data=request.data)
         serializer.is_valid(raise_exception=True)
+        print(serializer.validated_data)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -59,7 +60,11 @@ class FlightReportView(APIView):
     serializer_class = FlightSerializer
 
     def get(self, request, format=None):
-        response = {'status':1, 'message':'Successfully retrieved flights', 'data':{}}
+        response = {
+            "status": 1,
+            "message": "Successfully retrieved flights",
+            "data": {},
+        }
         departure_time = request.query_params.get("departure_time", None)
         arrival_time = request.query_params.get("arrival_time", None)
         current_time = timezone.now()
@@ -74,20 +79,27 @@ class FlightReportView(APIView):
             )
 
         data = []
-        for flight in queryset: 
-            number_of_flights = flight.departure_airport.departure_flights.all()
-            data.append(
-                {
-                    "airport" : {
-                        "id" : flight.departure_airport.id,
-                        "icao" : flight.departure_airport.icao,
-                        "number_of_flights" : len(number_of_flights)
-                    },
-                    # "in-flight-time-per-aricraft" : [{
-                    #     "serial_number" : aircraft.serial_number,
-                    #     "in_flight_time" : aircraft.in_flight_time,
-                    # } for aircraft in aircrafts]
-                }
-            )
-        response['data'] = data
+        duplicates = []
+        for flight_obj in queryset:
+            airport = flight_obj.departure_airport
+            if airport.id not in duplicates:
+                duplicates.append(airport.id)
+                data.append(
+                    {
+                        "airport_icao": airport.icao,
+                        "airport_name": airport.name,
+                        "number_of_flights": airport.departure_flights.count(),
+                        "flight_time_per_aircraft": [
+                            {
+                                "flight_time": "{} minutes".format((
+                                    i.arrival_time - i.departure_time
+                                ).total_seconds()
+                                / 60)
+                            }
+                            for i in airport.departure_flights.all()
+                        ],
+                    }
+                )
+
+        response["data"] = data
         return Response(response)

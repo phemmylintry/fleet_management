@@ -2,7 +2,6 @@ from django.urls import reverse
 from fleet.models import Aircraft
 from rest_framework import status
 from rest_framework.test import APITestCase
-from .factories import AircraftFactory, AirportFactory, FlightFactory
 
 
 class AircraftTests(APITestCase):
@@ -14,9 +13,9 @@ class AircraftTests(APITestCase):
         """
         Set up test data
         """
-        self.aircraft = AircraftFactory.create_batch(5)
-        for i in self.aircraft:
-            print(i)
+        self.aircraft = Aircraft.objects.create(
+            serial_number="12345", manufacturer="Airbus"
+        )
 
     def test_aircraft_create(self):
         """
