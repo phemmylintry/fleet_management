@@ -62,6 +62,6 @@ class Flight(models.Model):
     arrival_time = models.DateTimeField(default=None, null=True, blank=True)
 
     def __str__(self):
-        return str(self.aircraft)
+        return str(self.departure_airport) + " - " + str(self.arrival_airport)
 
     

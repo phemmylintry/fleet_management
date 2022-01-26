@@ -6,9 +6,10 @@ from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from django.db.models import Q
 from .filters import FlightFilter
 from .serializers import FlightSerializer, BaseFlightSerializer
+from api.aircraft.serializers import AircraftSerializer
 
 
 class FlightView(APIView):
@@ -67,39 +68,39 @@ class FlightReportView(APIView):
         }
         departure_time = request.query_params.get("departure_time", None)
         arrival_time = request.query_params.get("arrival_time", None)
-        current_time = timezone.now()
 
         try:
-            queryset = Flight.objects.select_related(
-                "aircraft", "departure_airport"
-            ).filter(departure_time__gte=departure_time, arrival_time__lte=arrival_time)
+            queryset = (
+                Flight.objects.select_related("aircraft", "departure_airport")
+                .filter(
+                    Q(departure_time__gte=departure_time)
+                    & Q(arrival_time__lte=arrival_time)
+                )
+                .order_by("departure_airport")
+            )
         except ValueError:
             return Response(
                 "Invalid query parameters", status=status.HTTP_400_BAD_REQUEST
             )
-
-        data = []
-        duplicates = []
-        for flight_obj in queryset:
-            airport = flight_obj.departure_airport
-            if airport.id not in duplicates:
-                duplicates.append(airport.id)
-                data.append(
-                    {
-                        "airport_icao": airport.icao,
-                        "airport_name": airport.name,
-                        "number_of_flights": airport.departure_flights.count(),
-                        "flight_time_per_aircraft": [
-                            {
-                                "flight_time": "{} minutes".format((
-                                    i.arrival_time - i.departure_time
-                                ).total_seconds()
-                                / 60)
-                            }
-                            for i in airport.departure_flights.all()
-                        ],
-                    }
-                )
+        data = {}
+        for flight in queryset:
+            if not data.__contains__(flight.departure_airport.icao):
+                flight_time_for_each_aircraft = []
+                data[flight.departure_airport.icao] = {
+                    "airport_name": flight.departure_airport.name,
+                    "flights_count": 0,
+                    "flight_time_for_each_aircraft": flight_time_for_each_aircraft,
+                }
+            data[flight.departure_airport.icao]["flights_count"] += 1
+            flight_time_for_each_aircraft.append(
+                {
+                    "aircraft": AircraftSerializer(flight.aircraft).data,
+                    "flight_time": "{} minutes".format(
+                        (flight.arrival_time - flight.departure_time).total_seconds()
+                        / 60
+                    ),
+                }
+            )
 
         response["data"] = data
         return Response(response)
