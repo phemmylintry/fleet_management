@@ -1,60 +1,27 @@
+from api.aircraft.serializers import AircraftSerializer
+from django.db.models import Q
 from django.http import Http404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from fleet.models import Flight
-from rest_framework import status
-from rest_framework.generics import ListAPIView
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Q
+
 from .filters import FlightFilter
-from .serializers import FlightSerializer, BaseFlightSerializer
-from api.aircraft.serializers import AircraftSerializer
+from .serializers import BaseFlightSerializer, FlightSerializer
 
 
-class FlightView(APIView):
-    serializer_class = BaseFlightSerializer
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class FlightListView(ListAPIView):
+class FlightView(generics.ListCreateAPIView):
     queryset = Flight.objects.all()
-    serializer_class = FlightSerializer
     filter_backends = (DjangoFilterBackend,)
     filter_class = FlightFilter
-
-
-class FlightDetailView(APIView):
     serializer_class = BaseFlightSerializer
 
-    def get_object(self, pk):
-        try:
-            return Flight.objects.get(pk=pk)
-        except Flight.DoesNotExist:
-            raise Http404
 
-    def get(self, request, pk, format=None):
-        flight = self.get_object(pk)
-        serializer = self.serializer_class(flight)
-        return Response(serializer.data)
-
-    def put(self, request, pk, format=None):
-        flight = self.get_object(pk)
-        serializer = self.serializer_class(flight, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        print(serializer.validated_data)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def delete(self, request, pk, format=None):
-        flight = self.get_object(pk)
-        flight.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class FlightDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = BaseFlightSerializer
+    queryset = Flight.objects.all()
 
 
 class FlightReportView(APIView):

@@ -7,7 +7,7 @@ class Aircraft(models.Model):
     """
 
     serial_number = models.CharField(
-        max_length=512, unique=True, null=True, blank=True, default=None
+        max_length=512, null=True, blank=True, default=None
     )
     manufacturer = models.CharField(max_length=512, default=None, null=True, blank=True)
 
@@ -63,5 +63,3 @@ class Flight(models.Model):
 
     def __str__(self):
         return str(self.departure_airport) + " - " + str(self.arrival_airport)
-
-    
