@@ -34,8 +34,7 @@ UPDATE, RETREIVE and DELETE: /aircraft/id
 
 FLight:
 ```bash
-POST: /flight
+POST and GET: /flight
 LIST: /flight/list-flights/
-GET Flight Report: /flight/report?query_params
 DELETE, RETRIEVE and UPDATE: /flight/id
 ```
